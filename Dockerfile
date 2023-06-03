@@ -4,7 +4,7 @@ FROM node:18.12.1
 WORKDIR /usr/src/app
 
 # Install app dependencies
-COPY package*.json ./
+COPY package*.json app.js ./
 RUN npm install
 
 # If you are building your code for production
@@ -14,4 +14,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 8080
-CMD ["node", "server.js"]
+CMD ["node", "app.js"]
