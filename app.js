@@ -2,12 +2,17 @@ const axios = require('axios');
 const fs = require('fs');
 const crypto = require('crypto');
 
-function fetchData(url) {
-    return axios.get(url)
-        .then(response => response.data.data)
-        .catch(error => {
-            throw new Error(`Error al obtener los datos: ${error}`);
-        });
+async function fetchData(url) {
+    try {
+        const response = await axios.get(url);
+        if (response.data && response.data.data) {
+            return response.data.data;
+        } else {
+            throw new Error("Formato de respuesta incorrecto");
+        }
+    } catch (error) {
+        throw new Error(`Error al obtener los datos: ${error}`);
+    }
 }
 
 function splitData(data) {
@@ -36,7 +41,6 @@ function filterDataByAge(dataList, age) {
 function generateOutputFile(dataList, filename) {
     const keyValues = dataList.map(item => item.key);
     const keyOutput = keyValues.join('\n');
-    //console.log(keyValues)
 
     try {
         fs.writeFileSync(filename, keyOutput);
@@ -52,9 +56,9 @@ function generateEncryptedFile(dataList, filename) {
         return crypto.createHash('sha1').update(age).digest('hex');
     }).join('\n');
 
-    console.log(ageOutput)
+    console.log(ageOutput);
 
-   /* try {
+    /*try {
         fs.writeFileSync(filename, ageOutput);
         console.log(`Archivo "${filename}" generado.`);
     } catch (error) {
@@ -62,29 +66,25 @@ function generateEncryptedFile(dataList, filename) {
     }*/
 }
 
-function processData(url) {
-    fetchData(url)
-        .then(data => {
-            const dataSplitList = splitData(data);
-            const setFilterAge = 32;
-            const outputList = filterDataByAge(dataSplitList, setFilterAge);
-            const userCount = outputList.length;
+async function processData(url, setFilterAge) {
+    try {
+        const data = await fetchData(url);
+        const dataSplitList = splitData(data);
+        const outputList = filterDataByAge(dataSplitList, setFilterAge);
+        const userCount = outputList.length;
 
-            if (userCount === 0) {
-                console.log("No existen usuarios con esa edad.");
-            } else {
-                console.log(`Existen ${userCount} registros de usuarios con ${setFilterAge} años de edad.`);
+        if (userCount === 0) {
+            console.log("No existen usuarios con esa edad.");
+        } else {
+            console.log(`Existen ${userCount} registros de usuarios con ${setFilterAge} años de edad.`);
 
-                generateOutputFile(outputList, 'output.txt');
-                generateEncryptedFile(outputList, 'encrypted_age.txt');
-            }
-
-
-        })
-        .catch(error => {
-            console.log('Error:', error.message);
-        });
+            generateOutputFile(outputList, 'output.txt');
+            generateEncryptedFile(outputList, 'encrypted_age.txt');
+        }
+    } catch (error) {
+        console.log('Error:', error.message);
+    }
 }
 
 // Llamada a la función principal para iniciar el procesamiento
-processData('https://coderbyte.com/api/challenges/json/age-counting');
+processData('https://coderbyte.com/api/challenges/json/age-counting', 32);
